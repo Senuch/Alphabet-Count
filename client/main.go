@@ -5,9 +5,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
+	"time"
 )
 
 const ADDRESS string = "0.0.0.0:50001"
+
+var EXIT = make(chan bool)
 
 func main() {
 	con, err := grpc.Dial(ADDRESS, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -22,5 +25,17 @@ func main() {
 
 	c := pb.NewCounterClient(con)
 
-	SendAlphabets(c, 1)
+	log.Println("Starting client")
+	go SendAlphabetRequests(c)
+	<-EXIT
+	log.Println("Client closed")
+}
+
+func SendAlphabetRequests(c pb.CounterClient) {
+	sid := int64(1)
+	for {
+		go SendAlphabets(c, sid)
+		sid++
+		time.Sleep(1 * time.Second)
+	}
 }
