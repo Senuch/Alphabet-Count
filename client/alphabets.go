@@ -6,11 +6,13 @@ import (
 	"io"
 	"log"
 	"strconv"
+	"sync"
 	"time"
 )
 
 func SendAlphabets(c pb.CounterClient, sid int64) {
 	sTime := time.Now()
+	sReqs := sync.Map{}
 	//goland:noinspection SpellCheckingInspection
 	strm, err := c.Alphabet(context.Background())
 
@@ -23,6 +25,7 @@ func SendAlphabets(c pb.CounterClient, sid int64) {
 	go func() {
 		for i := 1; i <= 4096; i++ {
 			message := GetLetterMessage(sid, int64(i))
+			sReqs.Store(message.MessageId, 1)
 			log.Printf("Sending message %v\n", message)
 			_ = strm.Send(message)
 			//time.Sleep(1 * time.Second)
@@ -33,7 +36,7 @@ func SendAlphabets(c pb.CounterClient, sid int64) {
 
 	go func() {
 		for {
-			_, err := strm.Recv()
+			res, err := strm.Recv()
 
 			if err == io.EOF {
 				break
@@ -44,8 +47,18 @@ func SendAlphabets(c pb.CounterClient, sid int64) {
 				break
 			}
 
+			val, ok := sReqs.LoadAndDelete(res.MessageId)
+			if !ok {
+				log.Fatalf("Received invalid response %v\n", val)
+			}
 			//log.Printf("Received response %v\n", res)
 		}
+
+		sReqs.Range(func(key, value any) bool {
+			log.Fatalf("Missing responses for requests")
+			return false
+		})
+
 		close(waitchn)
 		eTime := time.Since(sTime)
 		log.Printf("Spanned %s to complete 4096 request", eTime)
