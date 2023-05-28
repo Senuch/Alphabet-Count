@@ -21,9 +21,9 @@ func (s *Server) Alphabet(stream pb.Counter_AlphabetServer) error {
 		log.Printf("Alphabet received %s\n", req.Letter)
 		COUNTER.AddLetter(req.Letter)
 
-		a, b := COUNTER.GetHighestCountLetter()
+		a, b, c := COUNTER.GetCounterStats()
 
-		log.Printf("Current highest letter %s and count %d\n", a, b)
+		log.Printf("Current highest letter %s and letter count %d with total messages received %d\n", a, b, c)
 
 		res := &pb.LetterMessage{
 			MessageId: req.MessageId,
