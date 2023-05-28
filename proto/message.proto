@@ -9,3 +9,7 @@ message LetterMessage {
   int64 timeStamp = 2;
   string letter = 3;
 }
+
+service Counter {
+  rpc Alphabet (stream LetterMessage) returns (stream LetterMessage);
+}
