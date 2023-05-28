@@ -16,6 +16,7 @@ type Server struct {
 }
 
 func main() {
+	go RenderStats()
 	lis, err := net.Listen("tcp", ADDRESS)
 
 	if err != nil {
