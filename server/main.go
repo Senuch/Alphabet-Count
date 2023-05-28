@@ -9,6 +9,8 @@ import (
 
 const ADDRESS string = "0.0.0.0:50001"
 
+var COUNTER AlphabetCounter
+
 type Server struct {
 	pb.CounterServer
 }
