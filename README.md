@@ -74,4 +74,52 @@ So each worker further splits that into 4096/(CPU-CORE*2)
 routines thus increasing the overall throughput of the application.
 The number for each client i.e. 4096 is hypothetical
 since right now each go routine can easily handle it under 10 nanoseconds in reality,
-4096 should be a pretty big number for this approach to be adopted practically, for now simpler approach implemented here will work fine.
+4096 should be a pretty big number for this approach to be adopted practically.
+For now, the simpler approach implemented here will work fine.
+## Backend Scaling
+If we take a look at the current architecture and it being scaled to a hundred
+of nodes, there are 2 major parts of the server that can cause problems which are as follows...
+1. gRPC sticky session
+2. Distributed Counter(Happens as a result of solving the first issue)
+3. Count Display Service
+### gRPC Sticky Sessions
+gRPC sticky sessions use the same connection through most of the life cycle
+of the client requests, and this actually becomes even trickier when the connection is streaming.
+Now as the number of clients increases and on top,
+processing millions of requests, it will become difficult to manage all these sessions and requests on a single server.
+A clear solution is to use multiple gRPC servers with client or discovery focused load balancing.
+We can use external load balancer which is continuously fed with performance metrics of each server, and when a client
+wants to connect with the server, server gives the client a properly sorted list based on servers metric.
+Here is how this looks like in action...\
+![img](https://i.ibb.co/fpwyqP0/2.png)\
+So External LB is keeps track of the server metrics while also being consumed by the clients for fetching
+a suitable servers list for connection.
+With this, our clients can easily reach out to the server and get a connection, but
+it breaks the counter logic which leads us to the second problem concerning Distributed Counter.
+### Distributed Counters
+Previously, our counter state was maintained on a single server which is rendered bootless thanks to the server fleet.
+Now there are two possible solutions which are as follows...
+1. Implementing custom distributed counters
+2. Using pre-existing message queues
+
+Also since we don't plan to persist information, and the data itself is limited to 26 alphabets.
+Both of these
+ make counter implementation a little less tricky.
+We can add make use of Kafka.
+Since we are considering 100 servers for our scenario,
+we can add 26 Kafka topics with multiple partitions per topic.
+Each topic will be used by a single alphabet, and multiple writes on a single topic will be entertained
+by multiple consumers consuming multiple partitions of a single alphabet topic.
+Here is how it looks like...\
+![img](https://i.ibb.co/cc5215R/zdsas.png)\
+So multiple consumers will be consuming a single topic partitions.
+Each consumer will write the incremented count
+to a single shared location which can be a cache like redis maintaining count of all 26 Alphabets.
+### Count Display Service
+This will be the last piece that needs to be refactored.
+This service will display the current count of messages along
+with the alphabet with the highest frequency.
+Because of the scale, our data won't be 
+highly consistent but eventually consistent.
+If we go with high consistency, it might induce latency which we don't want, so we
+will compromise on high consistency and stick with eventually consistent cache and count rendering service.
