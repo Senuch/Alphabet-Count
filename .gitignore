@@ -1,5 +1,9 @@
 # IDE Files
 .idea/
+
+# Proto Generated Files
+*.pb.go
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
