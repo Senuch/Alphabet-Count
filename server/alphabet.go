@@ -18,8 +18,6 @@ func (s *Server) Alphabet(stream pb.Counter_AlphabetServer) error {
 			log.Fatalf("Error reading client stream %v\n", err)
 		}
 
-		// TODO: Remove after testing
-		//log.Printf("Alphabet received %s\n", req.Letter)
 		go COUNTER.UpdateCounter(req.Letter)
 
 		res := &pb.LetterMessage{

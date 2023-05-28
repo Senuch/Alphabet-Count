@@ -26,9 +26,7 @@ func SendAlphabets(c pb.CounterClient, sid int64) {
 		for i := 1; i <= 4096; i++ {
 			message := GetLetterMessage(sid, int64(i))
 			sReqs.Store(message.MessageId, 1)
-			log.Printf("Sending message %v\n", message)
 			_ = strm.Send(message)
-			//time.Sleep(1 * time.Second)
 		}
 
 		_ = strm.CloseSend()
