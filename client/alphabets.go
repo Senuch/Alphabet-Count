@@ -5,10 +5,12 @@ import (
 	"context"
 	"io"
 	"log"
+	"math/rand"
+	"strconv"
 	"time"
 )
 
-func sendAlphabets(c pb.CounterClient) {
+func sendAlphabets(c pb.CounterClient, sid int64) {
 	//goland:noinspection SpellCheckingInspection
 	strm, err := c.Alphabet(context.Background())
 
@@ -16,18 +18,13 @@ func sendAlphabets(c pb.CounterClient) {
 		log.Fatalf("Error while creating stream %v\n", err)
 	}
 
-	reqs := []*pb.LetterMessage{
-		{MessageId: 1, TimeStamp: 1, Letter: "A"},
-		{MessageId: 2, TimeStamp: 2, Letter: "B"},
-		{MessageId: 3, TimeStamp: 3, Letter: "C"},
-	}
-
 	//goland:noinspection SpellCheckingInspection
 	waitchn := make(chan struct{})
 	go func() {
-		for _, req := range reqs {
-			log.Printf("Sending message %v\n", req)
-			_ = strm.Send(req)
+		for i := 1; i < 10; i++ {
+			message := GetLetterMessage(sid, int64(i))
+			log.Printf("Sending message %v\n", message)
+			_ = strm.Send(message)
 			time.Sleep(1 * time.Second)
 		}
 
@@ -54,4 +51,23 @@ func sendAlphabets(c pb.CounterClient) {
 	}()
 
 	<-waitchn
+}
+
+func GetLetterMessage(sid int64, num int64) *pb.LetterMessage {
+	timestamp := time.Now().UnixNano()
+	r := rand.New(rand.NewSource(timestamp))
+	ascMin := 65
+	ascMax := 91
+
+	return &pb.LetterMessage{
+		TimeStamp: timestamp,
+		MessageId: GetLetterMessageId(sid, num),
+		Letter:    string(rune(r.Intn(ascMax-ascMin) + ascMin)),
+	}
+}
+
+func GetLetterMessageId(sid int64, num int64) int64 {
+	concat := strconv.FormatInt(sid, 10) + strconv.FormatInt(num, 10)
+	id, _ := strconv.ParseInt(concat, 10, 64)
+	return id
 }

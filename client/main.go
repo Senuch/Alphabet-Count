@@ -22,5 +22,5 @@ func main() {
 
 	c := pb.NewCounterClient(con)
 
-	sendAlphabets(c)
+	sendAlphabets(c, 1)
 }
