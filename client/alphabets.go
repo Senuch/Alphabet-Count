@@ -5,12 +5,12 @@ import (
 	"context"
 	"io"
 	"log"
-	"math/rand"
 	"strconv"
 	"time"
 )
 
-func sendAlphabets(c pb.CounterClient, sid int64) {
+func SendAlphabets(c pb.CounterClient, sid int64) {
+	sTime := time.Now()
 	//goland:noinspection SpellCheckingInspection
 	strm, err := c.Alphabet(context.Background())
 
@@ -21,11 +21,11 @@ func sendAlphabets(c pb.CounterClient, sid int64) {
 	//goland:noinspection SpellCheckingInspection
 	waitchn := make(chan struct{})
 	go func() {
-		for i := 1; i < 10; i++ {
+		for i := 1; i <= 4096; i++ {
 			message := GetLetterMessage(sid, int64(i))
 			log.Printf("Sending message %v\n", message)
 			_ = strm.Send(message)
-			time.Sleep(1 * time.Second)
+			//time.Sleep(1 * time.Second)
 		}
 
 		_ = strm.CloseSend()
@@ -33,7 +33,7 @@ func sendAlphabets(c pb.CounterClient, sid int64) {
 
 	go func() {
 		for {
-			res, err := strm.Recv()
+			_, err := strm.Recv()
 
 			if err == io.EOF {
 				break
@@ -44,10 +44,11 @@ func sendAlphabets(c pb.CounterClient, sid int64) {
 				break
 			}
 
-			log.Printf("Received response %v\n", res)
+			//log.Printf("Received response %v\n", res)
 		}
-
 		close(waitchn)
+		eTime := time.Since(sTime)
+		log.Printf("Spanned %s to complete 4096 request", eTime)
 	}()
 
 	<-waitchn
@@ -55,7 +56,7 @@ func sendAlphabets(c pb.CounterClient, sid int64) {
 
 func GetLetterMessage(sid int64, num int64) *pb.LetterMessage {
 	timestamp := time.Now().UnixNano()
-	r := rand.New(rand.NewSource(timestamp))
+	r := GetRandomInstance()
 	ascMin := 65
 	ascMax := 91
 
