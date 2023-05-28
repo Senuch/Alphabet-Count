@@ -38,7 +38,7 @@ endif
 
 .DEFAULT_GOAL := help
 .PHONY: server client proto help
-directories := server client proto
+directories := server
 
 all: $(directories) ## Generate Pbs and build
 
