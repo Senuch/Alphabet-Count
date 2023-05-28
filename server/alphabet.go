@@ -20,7 +20,7 @@ func (s *Server) Alphabet(stream pb.Counter_AlphabetServer) error {
 
 		// TODO: Remove after testing
 		//log.Printf("Alphabet received %s\n", req.Letter)
-		COUNTER.AddLetter(req.Letter)
+		go COUNTER.UpdateCounter(req.Letter)
 
 		res := &pb.LetterMessage{
 			MessageId: req.MessageId,

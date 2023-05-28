@@ -8,6 +8,7 @@ import (
 )
 
 const ADDRESS string = "0.0.0.0:50001"
+const CHANNELBUFFERSZIE = 4096
 
 var COUNTER AlphabetCounter
 
@@ -16,7 +17,9 @@ type Server struct {
 }
 
 func main() {
+	COUNTER.Init(CHANNELBUFFERSZIE)
 	go RenderStats()
+
 	lis, err := net.Listen("tcp", ADDRESS)
 
 	if err != nil {
