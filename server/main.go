@@ -7,20 +7,20 @@ import (
 	"net"
 )
 
-var address = "0.0.0.0:50001"
+const ADDRESS string = "0.0.0.0:50001"
 
 type Server struct {
 	pb.CounterServer
 }
 
 func main() {
-	lis, err := net.Listen("tcp", address)
+	lis, err := net.Listen("tcp", ADDRESS)
 
 	if err != nil {
 		log.Fatalf("Server failed to listen %v\n", err)
 	}
 
-	log.Printf("Server listening on %v\n", address)
+	log.Printf("Server listening on %v\n", ADDRESS)
 
 	s := grpc.NewServer()
 	pb.RegisterCounterServer(s, &Server{})
